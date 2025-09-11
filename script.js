@@ -202,8 +202,49 @@ class PollenTracker {
     }
 
     updateLocationCard(latitude, longitude) {
+        // Show coordinates temporarily while loading location name
         document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         document.getElementById('locationCard').style.display = 'flex';
+        
+        // Load human-friendly location name and replace coordinates
+        this.loadLocationNameFree(latitude, longitude);
+    }
+
+    // Free OpenStreetMap geocoding to show place name instead of coordinates
+    async loadLocationNameFree(latitude, longitude) {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=${this.currentLang}&addressdetails=1`
+            );
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.address) {
+                const city = data.address.city || 
+                            data.address.town || 
+                            data.address.village || 
+                            data.address.county ||
+                            data.address.state;
+                const country = data.address.country;
+                
+                const locationName = city ? `${city}, ${country}` : country || data.display_name.split(',')[0];
+                
+                // Update the coordinates element to show place name instead
+                document.getElementById('coordinates').textContent = locationName;
+            } else {
+                // Keep coordinates if geocoding fails
+                document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+            
+        } catch (error) {
+            console.error('Error loading location name:', error);
+            // Keep coordinates as fallback
+            document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        }
     }
 
     displayPollenData(data) {
