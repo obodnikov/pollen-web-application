@@ -1,93 +1,186 @@
-# Pollen Web Application
+# Pollen Tracker 🌿
 
+A modern, responsive web application that provides real-time pollen information based on your location. Built with vanilla JavaScript, the app displays current pollen levels, health recommendations, and weather information to help allergy sufferers plan their day.
 
+## Features ✨
 
-## Getting started
+- **Real-time Pollen Data**: Get current pollen levels for your location using Google Pollen API
+- **Multi-language Support**: Available in English and Russian
+- **Weather Integration**: Current weather conditions with temperature and weather icons
+- **Health Recommendations**: Personalized advice based on pollen levels
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Modern UI**: Clean, glassmorphism-inspired design with smooth animations
+- **Geolocation**: Automatic location detection with manual refresh option
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Demo 📱
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The app displays pollen information for different plant types including:
+- Trees (Oak, Birch, Pine, etc.)
+- Grasses
+- Weeds (Ragweed, Mugwort, etc.)
 
-## Add your files
+Each pollen card shows:
+- Pollen level (Very Low to Very High)
+- Numerical index value
+- Health impact description
+- Specific recommendations for managing exposure
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## File Structure 📁
 
 ```
-cd existing_repo
-git remote add origin http://gitlab.obodnikov.com/mike/pollen-web-application.git
-git branch -M main
-git push -uf origin main
+pollen-tracker/
+├── index.html          # Main HTML structure
+├── styles.css          # All styling and responsive design
+├── script.js           # JavaScript functionality
+├── README.md           # This documentation
+└── google_pollen.json  # Sample API response data
 ```
 
-## Integrate with your tools
+## Setup Instructions 🚀
 
-- [ ] [Set up project integrations](http://gitlab.obodnikov.com/mike/pollen-web-application/-/settings/integrations)
+### Prerequisites
+- A modern web browser
+- Google API key with Pollen API access
+- (Optional) OpenWeatherMap API key for weather data
 
-## Collaborate with your team
+### Installation
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+1. **Clone or download** the project files to your local machine
 
-## Test and Deploy
+2. **Get API Keys**:
+   - Visit [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable the Pollen API
+   - Create an API key
+   - (Optional) Get a weather API key from [OpenWeatherMap](https://openweathermap.org/api)
 
-Use the built-in continuous integration in GitLab.
+3. **Configure API Keys**:
+   Open `script.js` and replace the placeholder API keys:
+   ```javascript
+   this.apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your Google API key
+   
+   // In loadWeatherData method:
+   const weatherApiKey = 'YOUR_WEATHER_API_KEY'; // Replace with your weather API key
+   ```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+4. **Run the Application**:
+   - Open `index.html` in a web browser, or
+   - Serve the files using a local web server (recommended for full functionality)
 
-***
+### Using a Local Server
 
-# Editing this README
+For the best experience and to avoid CORS issues, run a local server:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+# Using Python 3
+python -m http.server 8000
 
-## Suggestions for a good README
+# Using Node.js (if you have http-server installed)
+npx http-server
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+# Using PHP
+php -S localhost:8000
+```
 
-## Name
-Choose a self-explaining name for your project.
+Then visit `http://localhost:8000` in your browser.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Usage 💡
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+1. **Allow Location Access**: The app will request permission to access your location
+2. **View Pollen Data**: See current pollen levels for your area
+3. **Read Recommendations**: Follow health advice based on pollen levels
+4. **Switch Languages**: Use the language selector to toggle between English and Russian
+5. **Refresh Data**: Click the refresh button to get updated information
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## API Configuration 🔧
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### Google Pollen API
+- **Endpoint**: `https://pollen.googleapis.com/v1/forecast:lookup`
+- **Required Parameters**: API key, latitude, longitude
+- **Optional Parameters**: days (forecast period), languageCode
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### Weather API (Optional)
+- **Default**: OpenWeatherMap API
+- **Endpoint**: `https://api.openweathermap.org/data/2.5/weather`
+- **Note**: Weather functionality will be disabled if no API key is provided
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Customization 🎨
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Styling
+- Modify `styles.css` to change colors, fonts, or layout
+- The design uses CSS custom properties for easy theme customization
+- Responsive breakpoints can be adjusted in the media queries
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Language Support
+- Add new languages by extending the `translations` object in `script.js`
+- Update the language selector in `index.html`
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Default Images
+- The app uses a fallback image from Columbia University for pollen items without pictures
+- Change the default image URL in the `createPollenCard` method
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Browser Support 🌐
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- Chrome 60+
+- Firefox 55+
+- Safari 12+
+- Edge 79+
 
-## License
-For open source projects, say how it is licensed.
+**Required Features**:
+- ES6+ JavaScript support
+- Geolocation API
+- Fetch API
+- CSS Grid and Flexbox
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## Troubleshooting 🔍
+
+### Common Issues
+
+1. **"API key required" error**:
+   - Ensure you've replaced `YOUR_GOOGLE_API_KEY` with your actual API key
+   - Verify the API key has Pollen API access enabled
+
+2. **Location access denied**:
+   - Check browser location permissions
+   - Ensure you're accessing the app via HTTPS or localhost
+
+3. **No pollen data displayed**:
+   - Check browser console for API errors
+   - Verify your API key quota and billing settings
+   - Ensure your location has available pollen data
+
+4. **CORS errors**:
+   - Use a local web server instead of opening the HTML file directly
+   - Ensure your domain is authorized in the Google Cloud Console
+
+## Contributing 🤝
+
+Contributions are welcome! Areas for improvement:
+- Additional language support
+- More weather data sources
+- Historical pollen data charts
+- Push notifications for high pollen days
+- PWA functionality
+
+## License 📄
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## Credits 🙏
+
+- **Pollen Data**: Powered by Google Pollen API
+- **Weather Data**: OpenWeatherMap API
+- **Default Image**: Columbia University Magazine
+- **Icons**: Unicode emoji characters
+- **Design**: Modern glassmorphism and gradient design trends
+
+## Support 💬
+
+For questions or issues:
+1. Check the troubleshooting section above
+2. Review the browser console for error messages
+3. Ensure all API keys are correctly configured
+4. Verify that required APIs are enabled in your Google Cloud Console
+
+---
+
+**Happy allergy-free days!** 🌞
