@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollen Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 data-en="Pollen Tracker" data-ru="Трекер Пыльцы">Pollen Tracker</h1>
+            <div class="controls">
+                <select id="languageSelect" class="language-select">
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                </select>
+                <button id="refreshBtn" class="refresh-btn" data-en="Refresh" data-ru="Обновить">Refresh</button>
+            </div>
+        </header>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p data-en="Loading pollen data..." data-ru="Загрузка данных о пыльце...">Loading pollen data...</p>
+        </div>
+
+        <!-- Location & Weather Card -->
+        <div id="locationCard" class="location-card" style="display: none;">
+            <div class="location-info">
+                <h2 id="locationName" data-en="Current Location" data-ru="Текущее местоположение">Current Location</h2>
+                <p id="coordinates"></p>
+            </div>
+            <div class="weather-info">
+                <div id="weatherIcon">🌤️</div>
+                <div class="weather-details">
+                    <span id="temperature">--°C</span>
+                    <span id="weatherDesc" data-en="Loading weather..." data-ru="Загрузка погоды...">Loading weather...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <h3 data-en="Error" data-ru="Ошибка">Error</h3>
+            <p id="errorText"></p>
+            <button id="retryBtn" data-en="Try Again" data-ru="Попробовать снова">Try Again</button>
+        </div>
+
+        <!-- Pollen Cards Container -->
+        <div id="pollenContainer" class="pollen-container">
+            <!-- Pollen cards will be generated here -->
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p data-en="Data provided by Google Pollen API" data-ru="Данные предоставлены Google Pollen API">Data provided by Google Pollen API</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
