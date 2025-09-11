@@ -40,9 +40,7 @@ pollen-tracker/
 ├── index.html              # Main HTML structure
 ├── styles.css              # All styling and responsive design
 ├── script.js               # JavaScript functionality with geocoding
-├── russian_default_script.js # Alternative script with Russian as default
 ├── README.md               # This documentation
-├── google_pollen.json      # Sample API response data
 ├── favicon.svg             # App icon (32x32 SVG)
 ├── apple-touch-icon.png    # iOS home screen icon (180x180 PNG)
 └── favicon.ico             # Legacy browser support (32x32 ICO)
