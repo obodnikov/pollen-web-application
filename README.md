@@ -6,11 +6,12 @@ A modern, responsive web application that provides real-time pollen information 
 
 - **Real-time Pollen Data**: Get current pollen levels for your location using Google Pollen API
 - **Human-Friendly Location Names**: Automatic reverse geocoding using free OpenStreetMap API
-- **Multi-language Support**: Available in English and Russian
+- **Multi-language Support**: Available in English and Russian (Russian as default)
 - **Weather Integration**: Current weather conditions with temperature and weather icons
 - **Health Recommendations**: Personalized advice based on pollen levels
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **Modern UI**: Clean, glassmorphism-inspired design with smooth animations
+- **Custom Favicon**: Professional app icon for all devices and platforms
 - **Geolocation**: Automatic location detection with manual refresh option
 - **Smart Fallbacks**: Graceful error handling and fallback systems
 
@@ -32,16 +33,50 @@ The location card displays:
 - Current weather conditions with temperature
 - Weather icons and descriptions
 
-## File Structure 📁
+## File Structure 📂
 
 ```
 pollen-tracker/
-├── index.html          # Main HTML structure
-├── styles.css          # All styling and responsive design
-├── script.js           # JavaScript functionality with geocoding
-├── README.md           # This documentation
-└── google_pollen.json  # Sample API response data
+├── index.html              # Main HTML structure
+├── styles.css              # All styling and responsive design
+├── script.js               # JavaScript functionality with geocoding
+├── russian_default_script.js # Alternative script with Russian as default
+├── README.md               # This documentation
+├── google_pollen.json      # Sample API response data
+├── favicon.svg             # App icon (32x32 SVG)
+├── apple-touch-icon.png    # iOS home screen icon (180x180 PNG)
+└── favicon.ico             # Legacy browser support (32x32 ICO)
 ```
+
+## Favicon Setup 🎨
+
+The app includes a custom-designed favicon that represents nature and pollen tracking:
+
+### Included Icon Files
+- **`favicon.svg`** - Modern SVG favicon (32x32) for current browsers
+- **`apple-touch-icon.png`** - iOS home screen icon (180x180)
+- **`favicon.ico`** - Legacy ICO format (32x32) for older browsers
+
+### Favicon Features
+- 🌿 **Leaf design** with pollen particles
+- 💜 **Gradient background** matching app theme
+- ✨ **Modern glass effects** and subtle shadows
+- 📱 **Optimized for all devices** (desktop, mobile, iOS)
+
+### Creating Your Own Icons
+
+If you want to customize the favicon:
+
+1. **Edit the SVG** using any vector graphics editor
+2. **Convert to other formats** using:
+   - [Favicon.io](https://favicon.io/favicon-converter/) - Complete favicon generator
+   - [RealFaviconGenerator](https://realfavicongenerator.net/) - Advanced platform optimization
+   - Command line: `magick favicon.svg -resize 180x180 apple-touch-icon.png`
+
+3. **Icon specifications**:
+   - **Favicon**: 32x32px (SVG preferred, ICO fallback)
+   - **Apple Touch Icon**: 180x180px PNG
+   - **Design**: High contrast, simple shapes, recognizable at small sizes
 
 ## Setup Instructions 🚀
 
@@ -62,7 +97,7 @@ pollen-tracker/
    - (Optional) Get a weather API key from [OpenWeatherMap](https://openweathermap.org/api)
 
 3. **Configure API Keys**:
-   Open `script.js` and replace the placeholder API keys:
+   Open `script.js` (or `russian_default_script.js` for Russian default) and replace the placeholder API keys:
    ```javascript
    this.apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your Google API key
    
@@ -70,7 +105,16 @@ pollen-tracker/
    const weatherApiKey = 'YOUR_WEATHER_API_KEY'; // Replace with your weather API key
    ```
 
-4. **Run the Application**:
+4. **Setup Favicon** (optional but recommended):
+   ```html
+   <!-- Add to <head> section of index.html -->
+   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+   <link rel="icon" type="image/x-icon" href="favicon.ico">
+   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+   <meta name="apple-mobile-web-app-title" content="Pollen Tracker">
+   ```
+
+5. **Run the Application**:
    - Open `index.html` in a web browser, or
    - Serve the files using a local web server (recommended for full functionality)
 
@@ -100,6 +144,7 @@ Then visit `http://localhost:8000` in your browser.
 5. **Read Recommendations**: Follow health advice based on pollen levels
 6. **Switch Languages**: Use the language selector to toggle between English and Russian
 7. **Refresh Data**: Click the refresh button to get updated information
+8. **Add to Home Screen**: On iOS/Android, add the app to your home screen for quick access
 
 ## API Configuration 🔧
 
@@ -145,6 +190,7 @@ The app includes intelligent location handling:
 - Responsive breakpoints can be adjusted in the media queries
 
 ### Language Support
+- **Default Language**: Russian (can be changed by modifying `currentLang` in script)
 - Add new languages by extending the `translations` object in `script.js`
 - Update the language selector in `index.html`
 - OpenStreetMap geocoding will automatically use the selected language
@@ -153,6 +199,11 @@ The app includes intelligent location handling:
 - The app uses free OpenStreetMap geocoding by default
 - Can be upgraded to Google Geocoding API for higher accuracy
 - Location name format can be customized in the `loadLocationNameFree()` method
+
+### Custom Favicon
+- Edit the provided SVG files to match your branding
+- Use online converters to generate different sizes and formats
+- Update the favicon links in `index.html`
 
 ### Default Images
 - The app uses a fallback image from Columbia University for pollen items without pictures
@@ -170,8 +221,18 @@ The app includes intelligent location handling:
 - Geolocation API
 - Fetch API
 - CSS Grid and Flexbox
+- SVG support (for favicon)
 
-## Troubleshooting 🔍
+## Progressive Web App Features 📱
+
+The app includes mobile-friendly features:
+- **Responsive design** that works on all screen sizes
+- **Touch-optimized interface** with proper spacing
+- **Apple Touch Icon** for iOS home screen bookmarks
+- **Viewport meta tags** for proper mobile rendering
+- **Fast loading** with minimal dependencies
+
+## Troubleshooting 🔧
 
 ### Common Issues
 
@@ -201,11 +262,17 @@ The app includes intelligent location handling:
    - The geocoding service respects the language setting
    - Some locations may not have translations available
 
+7. **Favicon not appearing**:
+   - Clear browser cache and refresh
+   - Check that favicon files are in the correct directory
+   - Verify favicon links in HTML `<head>` section
+   - Test in different browsers (some may cache favicons aggressively)
+
 ### Performance Notes
 
 - **Geocoding calls**: Made only when location changes, not on every refresh
 - **Rate limiting**: OpenStreetMap allows 1 request per second for reasonable usage
-- **Caching**: Browser may cache geocoding results
+- **Caching**: Browser may cache geocoding results and favicons
 - **Fallback system**: Always displays something, even if services fail
 
 ## API Costs and Limits 💰
@@ -225,9 +292,11 @@ Contributions are welcome! Areas for improvement:
 - More weather data sources
 - Historical pollen data charts
 - Push notifications for high pollen days
-- PWA functionality
+- Progressive Web App (PWA) functionality
 - Caching for geocoding results
 - Alternative geocoding providers
+- Custom favicon designs
+- Accessibility improvements
 
 ## Privacy & Data 🔒
 
@@ -235,6 +304,7 @@ Contributions are welcome! Areas for improvement:
 - **No tracking**: No analytics or user tracking
 - **Third-party APIs**: Data sent to Google (pollen), OpenStreetMap (geocoding), and optionally OpenWeatherMap (weather)
 - **No personal data**: App doesn't collect or store personal information
+- **Favicon**: Static files, no tracking or external calls
 
 ## License 📄
 
@@ -245,13 +315,21 @@ This project is open source and available under the [MIT License](LICENSE).
 - **Pollen Data**: Powered by Google Pollen API
 - **Geocoding**: Free OpenStreetMap Nominatim service
 - **Weather Data**: OpenWeatherMap API (optional)
+- **Favicon Design**: Custom SVG with leaf and pollen theme
 - **Default Image**: Columbia University Magazine
 - **Icons**: Unicode emoji characters
 - **Design**: Modern glassmorphism and gradient design trends
 
-## Changelog 📝
+## Changelog 📅
 
-### Version 1.1 (Latest)
+### Version 1.2 (Latest)
+- ✅ Added custom favicon and Apple Touch Icon
+- ✅ Enhanced mobile experience with proper icons
+- ✅ Russian as default language option
+- ✅ Improved documentation with favicon setup
+- ✅ Added favicon troubleshooting section
+
+### Version 1.1
 - ✅ Added free reverse geocoding using OpenStreetMap
 - ✅ Human-friendly location names instead of coordinates
 - ✅ Multi-language geocoding support
@@ -272,6 +350,7 @@ For questions or issues:
 3. Ensure all API keys are correctly configured
 4. Verify that required APIs are enabled in your Google Cloud Console
 5. Check internet connection for geocoding services
+6. Test favicon setup with browser developer tools
 
 ## Roadmap 🛣️
 
@@ -279,9 +358,11 @@ For questions or issues:
 - [ ] Historical pollen data visualization
 - [ ] 7-day pollen forecast
 - [ ] Push notifications for high pollen alerts
-- [ ] PWA support with offline mode
+- [ ] Full PWA support with offline mode and app manifest
 - [ ] User preferences and favorites
 - [ ] Export data functionality
+- [ ] Dark/light theme toggle
+- [ ] Multiple location tracking
 
 ---
 
