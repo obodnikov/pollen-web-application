@@ -4,7 +4,7 @@ A modern web application for tracking real-time pollen data based on your locati
 
 ## 🚀 Quick Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/yourrepo/tree/main/vercel)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/obodnikov/pollen-web-application/tree/main/vercel)
 
 ## 🔧 Setup
 
