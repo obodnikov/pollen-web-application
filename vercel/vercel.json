@@ -6,7 +6,14 @@
   "outputDirectory": ".",
   "installCommand": "echo 'No dependencies to install'",
   "public": false,
-  "functions": {},
+  "functions": {
+    "api/pollen.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/weather.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
