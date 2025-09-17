@@ -1,19 +1,6 @@
 {
   "version": 2,
   "name": "pollen-tracker",
-  "framework": null,
-  "buildCommand": "echo 'No build process needed for static files'",
-  "outputDirectory": ".",
-  "installCommand": "echo 'No dependencies to install'",
-  "public": false,
-  "functions": {
-    "api/pollen.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/weather.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
@@ -25,10 +12,6 @@
         {
           "key": "X-Frame-Options",
           "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
         }
       ]
     },
@@ -48,8 +31,5 @@
       "destination": "/",
       "permanent": true
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
