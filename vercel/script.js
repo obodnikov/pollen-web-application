@@ -155,30 +155,19 @@ class PollenTracker {
         }
     }
 
-    // Keep weather data loading as-is (or create another API route if needed)
+    // Using Weather API Route
     async loadWeatherData(latitude, longitude) {
         try {
-            // Option 1: Direct call (as before)
-            const weatherApiKey = 'YOUR_WEATHER_API_KEY'; // You can still expose this or create another API route
-            
-            if (weatherApiKey === 'YOUR_WEATHER_API_KEY') {
-                document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
-                return;
-            }
-
-            const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${weatherApiKey}&units=metric&lang=${this.currentLang}`);
+            // Use your Vercel weather API endpoint
+            const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}&lang=${this.currentLang}`);
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
             this.displayWeatherData(data);
-            
-            // Option 2: Use another Vercel API route for weather (more secure)
-            // const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}&lang=${this.currentLang}`);
-            // ... handle response similarly to pollen data
-            
         } catch (error) {
             console.error('Error loading weather data:', error);
             document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
