@@ -29,7 +29,7 @@
     border-bottom: 2px solid #e0e0e0;
     position: relative;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: clip;
 }
 
 .history-day {
