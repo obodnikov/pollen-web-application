@@ -1,12 +1,9 @@
-// Enhanced Local PollenTracker with Individual Pollen Type History
+// Enhanced PollenHistoryManager with individual pollen type tracking
 class DetailedPollenHistoryManager {
     constructor() {
         this.storageKey = 'detailed-pollen-history';
         this.maxHistoryDays = 30;
-        
-        // Use localStorage for persistence (fallback to memory for demo)
-        this.useLocalStorage = typeof(Storage) !== "undefined";
-        this.memoryStorage = new Map();
+        this.historyData = new Map();
         
         // Pollen type configuration with colors and names
         this.pollenTypes = {
@@ -40,12 +37,6 @@ class DetailedPollenHistoryManager {
                 color: 'pollen-pine',
                 category: 'tree'
             },
-            'TREE_ALDER': { 
-                name: { en: 'Alder', ru: 'Ольха' }, 
-                shortName: { en: 'Ald', ru: 'Оль' },
-                color: 'pollen-alder',
-                category: 'tree'
-            },
             'GRASS': { 
                 name: { en: 'Grass', ru: 'Травы' }, 
                 shortName: { en: 'Gra', ru: 'Тра' },
@@ -57,6 +48,12 @@ class DetailedPollenHistoryManager {
                 shortName: { en: 'Rag', ru: 'Амб' },
                 color: 'pollen-ragweed',
                 category: 'weed'
+            },
+            'TREE_ALDER': { 
+                name: { en: 'Alder', ru: 'Ольха' }, 
+                shortName: { en: 'Ald', ru: 'Оль' },
+                color: 'pollen-alder',
+                category: 'tree'
             },
             'WEED_MUGWORT': { 
                 name: { en: 'Mugwort', ru: 'Полынь' }, 
@@ -78,61 +75,24 @@ class DetailedPollenHistoryManager {
         const locationKey = this.getLocationKey(latitude, longitude);
         const dateKey = date || new Date().toISOString().split('T')[0];
         
-        let history = this.getHistory();
-        
-        if (!history[locationKey]) {
-            history[locationKey] = {};
+        if (!this.historyData.has(locationKey)) {
+            this.historyData.set(locationKey, new Map());
         }
         
+        const locationData = this.historyData.get(locationKey);
         const processedData = this.processDetailedPollenData(pollenData);
         
-        history[locationKey][dateKey] = {
+        locationData.set(dateKey, {
             timestamp: Date.now(),
             rawData: pollenData,
             processed: processedData
-        };
+        });
         
-        this.cleanOldData(history[locationKey]);
-        this.saveHistory(history);
+        this.cleanOldData(locationData);
     }
 
     getLocationKey(latitude, longitude) {
         return `${latitude.toFixed(4)},${longitude.toFixed(4)}`;
-    }
-
-    // Get all history from storage
-    getHistory() {
-        if (this.useLocalStorage) {
-            try {
-                return JSON.parse(localStorage.getItem(this.storageKey)) || {};
-            } catch (e) {
-                console.warn('Failed to load history from localStorage:', e);
-                return {};
-            }
-        } else {
-            // Fallback to memory storage
-            const result = {};
-            this.memoryStorage.forEach((value, key) => {
-                result[key] = value;
-            });
-            return result;
-        }
-    }
-
-    // Save history to storage
-    saveHistory(history) {
-        if (this.useLocalStorage) {
-            try {
-                localStorage.setItem(this.storageKey, JSON.stringify(history));
-            } catch (e) {
-                console.warn('Failed to save history to localStorage:', e);
-            }
-        } else {
-            // Fallback to memory storage
-            Object.keys(history).forEach(key => {
-                this.memoryStorage.set(key, history[key]);
-            });
-        }
     }
 
     // Process pollen data into individual types with levels
@@ -226,45 +186,10 @@ class DetailedPollenHistoryManager {
         };
     }
 
-    // Get history for specific location
-    getLocationHistory(latitude, longitude) {
-        const locationKey = this.getLocationKey(latitude, longitude);
-        const history = this.getHistory();
-        return history[locationKey] || {};
-    }
-
-    cleanOldData(locationHistory) {
-        const dates = Object.keys(locationHistory).sort();
-        if (dates.length > this.maxHistoryDays) {
-            const toDelete = dates.slice(0, dates.length - this.maxHistoryDays);
-            toDelete.forEach(date => {
-                delete locationHistory[date];
-            });
-        }
-    }
-
-    getDateRange(days = 5) {
-        const dates = [];
-        const today = new Date();
-        
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            dates.push({
-                date: date.toISOString().split('T')[0],
-                dateObj: new Date(date),
-                isToday: i === 0,
-                isPast: i > 0
-            });
-        }
-        
-        return dates;
-    }
-
     // Generate detailed history chart HTML
     generateDetailedHistoryChart(dateRange, locationHistory, currentLang) {
         return dateRange.map(dateInfo => {
-            const dayData = locationHistory[dateInfo.date];
+            const dayData = locationHistory.get(dateInfo.date);
             
             let dayName;
             if (dateInfo.isToday) {
@@ -366,7 +291,7 @@ class DetailedPollenHistoryManager {
         const allTypes = new Set();
         
         // Collect all pollen types from history
-        Object.values(locationHistory).forEach(dayData => {
+        locationHistory.forEach(dayData => {
             if (dayData.processed && dayData.processed.types) {
                 Object.keys(dayData.processed.types).forEach(code => {
                     allTypes.add(code);
@@ -388,85 +313,93 @@ class DetailedPollenHistoryManager {
 
         return legendItems;
     }
+
+    cleanOldData(locationData) {
+        const dates = Array.from(locationData.keys()).sort();
+        if (dates.length > this.maxHistoryDays) {
+            const toDelete = dates.slice(0, dates.length - this.maxHistoryDays);
+            toDelete.forEach(date => locationData.delete(date));
+        }
+    }
+
+    getDateRange(days = 5) {
+        const dates = [];
+        const today = new Date();
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            dates.push({
+                date: date.toISOString().split('T')[0],
+                dateObj: new Date(date),
+                isToday: i === 0,
+                isPast: i > 0
+            });
+        }
+        
+        return dates;
+    }
+
+    getLocationHistory(latitude, longitude) {
+        const locationKey = this.getLocationKey(latitude, longitude);
+        return this.historyData.get(locationKey) || new Map();
+    }
 }
 
-// Enhanced PollenTracker - LOCAL VERSION (Direct API calls)
-class PollenTracker {
+// Enhanced PollenTracker with detailed history
+class EnhancedPollenTracker {
     constructor() {
-        this.apiKey = 'AIzaSyAPb_3V68NkYHWw4sNBXS0ACuZbkCOJ6N4'; // Replace with your actual API key
         this.currentLang = 'ru';
         this.historyManager = new DetailedPollenHistoryManager();
         this.showHistory = false;
-        this.currentLocation = null;
+        this.historyMode = 'detailed'; // 'simple' or 'detailed'
         
         this.translations = {
             en: {
                 'Pollen Tracker': 'Pollen Tracker',
                 'Current Location': 'Current Location',
                 'Loading pollen data...': 'Loading pollen data...',
-                'Loading weather...': 'Loading weather...',
                 'Refresh': 'Refresh',
                 'History': 'History',
                 'Detailed History': 'Detailed History',
+                'Simple History': 'Simple History',
                 'Hide History': 'Hide History',
                 'Show History': 'Show History',
-                'Error': 'Error',
-                'Try Again': 'Try Again',
-                'Data provided by Google Pollen API': 'Data provided by Google Pollen API',
-                'Recommendations': 'Recommendations',
-                'Very Low': 'Very Low',
-                'Low': 'Low',
-                'Moderate': 'Moderate',
-                'High': 'High',
-                'Very High': 'Very High',
-                'Location access denied': 'Location access denied. Please allow location access and try again.',
-                'Location not available': 'Location services are not available on this device.',
-                'Location timeout': 'Location request timed out. Please try again.',
-                'Failed to load pollen data': 'Failed to load pollen data. Please check your internet connection.',
-                'Failed to load weather data': 'Failed to load weather data.',
-                'API key required': 'Google API key is required. Please add your API key to the script.',
-                'No pollen data': 'No significant pollen data found for your location today.',
                 '5-Day Pollen History': '5-Day Pollen History',
                 'Detailed Pollen History by Types (5 days)': 'Detailed Pollen History by Types (5 days)',
                 'Today': 'Today',
                 'Yesterday': 'Yesterday',
                 'No data': 'No data',
                 'Pollen Types': 'Pollen Types',
-                'Concentration Levels': 'Concentration Levels'
+                'Concentration Levels': 'Concentration Levels',
+                'Very Low': 'Very Low',
+                'Low': 'Low',
+                'Moderate': 'Moderate',
+                'High': 'High',
+                'Very High': 'Very High'
             },
             ru: {
                 'Pollen Tracker': 'Трекер Пыльцы',
                 'Current Location': 'Текущее местоположение',
                 'Loading pollen data...': 'Загрузка данных о пыльце...',
-                'Loading weather...': 'Загрузка погоды...',
                 'Refresh': 'Обновить',
                 'History': 'История',
                 'Detailed History': 'Подробная история',
+                'Simple History': 'Простая история',
                 'Hide History': 'Скрыть историю',
                 'Show History': 'Показать историю',
-                'Error': 'Ошибка',
-                'Try Again': 'Попробовать снова',
-                'Data provided by Google Pollen API': 'Данные предоставлены Google Pollen API',
-                'Recommendations': 'Рекомендации',
-                'Very Low': 'Очень низкий',
-                'Low': 'Низкий',
-                'Moderate': 'Умеренный',
-                'High': 'Высокий',
-                'Very High': 'Очень высокий',
-                'Location access denied': 'Доступ к местоположению запрещен. Разрешите доступ к местоположению и попробуйте снова.',
-                'Location not available': 'Службы определения местоположения недоступны на этом устройстве.',
-                'Location timeout': 'Время запроса местоположения истекло. Попробуйте снова.',
-                'Failed to load pollen data': 'Не удалось загрузить данные о пыльце. Проверьте подключение к интернету.',
-                'Failed to load weather data': 'Не удалось загрузить данные о погоде.',
-                'API key required': 'Требуется ключ Google API. Добавьте ваш ключ API в скрипт.',
-                'No pollen data': 'Значимых данных о пыльце для вашего местоположения сегодня не найдено.',
                 '5-Day Pollen History': '5-дневная история пыльцы',
                 'Detailed Pollen History by Types (5 days)': 'Подробная история пыльцы по типам (5 дней)',
                 'Today': 'Сегодня',
                 'Yesterday': 'Вчера',
                 'No data': 'Нет данных',
                 'Pollen Types': 'Типы пыльцы',
-                'Concentration Levels': 'Уровни концентрации'
+                'Concentration Levels': 'Уровни концентрации',
+                'Very Low': 'Очень низкий',
+                'Low': 'Низкий',
+                'Moderate': 'Умеренный',
+                'High': 'Высокий',
+                'Very High': 'Очень высокий'
             }
         };
         
@@ -540,6 +473,10 @@ class PollenTracker {
         }
     }
 
+    translate(key) {
+        return this.translations[this.currentLang][key] || key;
+    }
+
     updateLanguage() {
         document.querySelectorAll('[data-en]').forEach(element => {
             const key = element.getAttribute('data-en');
@@ -556,16 +493,12 @@ class PollenTracker {
         }
     }
 
-    translate(key) {
-        return this.translations[this.currentLang][key] || key;
-    }
-
     getCurrentLocation() {
         this.showLoading();
         this.hideError();
 
         if (!navigator.geolocation) {
-            this.showError(this.translate('Location not available'));
+            this.showError('Location services not available');
             return;
         }
 
@@ -578,22 +511,7 @@ class PollenTracker {
                 this.loadWeatherData(latitude, longitude);
             },
             (error) => {
-                let errorMessage;
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = this.translate('Location access denied');
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = this.translate('Location not available');
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = this.translate('Location timeout');
-                        break;
-                    default:
-                        errorMessage = this.translate('Location not available');
-                        break;
-                }
-                this.showError(errorMessage);
+                this.showError('Failed to get location');
             },
             {
                 enableHighAccuracy: true,
@@ -603,16 +521,10 @@ class PollenTracker {
         );
     }
 
-    // LOCAL VERSION: Direct Google API calls
     async loadPollenData(latitude, longitude) {
-        if (this.apiKey === 'YOUR_GOOGLE_API_KEY') {
-            this.showError(this.translate('API key required'));
-            return;
-        }
-
         try {
             const languageCode = this.currentLang;
-            const response = await fetch(`https://pollen.googleapis.com/v1/forecast:lookup?key=${this.apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=1&languageCode=${languageCode}`);
+            const response = await fetch(`/api/pollen?latitude=${latitude}&longitude=${longitude}&languageCode=${languageCode}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -634,97 +546,7 @@ class PollenTracker {
             this.hideLoading();
         } catch (error) {
             console.error('Error loading pollen data:', error);
-            this.showError(this.translate('Failed to load pollen data'));
-        }
-    }
-
-    // LOCAL VERSION: Direct Weather API calls (optional)
-    async loadWeatherData(latitude, longitude) {
-        try {
-            const weatherApiKey = '38d966823b51610f725bd497a6710e69'; // Replace with your weather API key
-            
-            if (weatherApiKey === 'YOUR_WEATHER_API_KEY') {
-                document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
-                return;
-            }
-
-            const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${weatherApiKey}&units=metric&lang=${this.currentLang}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            this.displayWeatherData(data);
-        } catch (error) {
-            console.error('Error loading weather data:', error);
-            document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
-        }
-    }
-
-    displayWeatherData(data) {
-        const temperature = Math.round(data.main.temp);
-        const description = data.weather[0].description;
-        const iconCode = data.weather[0].icon;
-        
-        document.getElementById('temperature').textContent = `${temperature}°C`;
-        document.getElementById('weatherDesc').textContent = description;
-        
-        // Weather icon mapping
-        const iconMap = {
-            '01d': '☀️', '01n': '🌙', '02d': '⛅', '02n': '⛅',
-            '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
-            '09d': '🌦️', '09n': '🌦️', '10d': '🌧️', '10n': '🌧️',
-            '11d': '⛈️', '11n': '⛈️', '13d': '🌨️', '13n': '🌨️',
-            '50d': '🌫️', '50n': '🌫️'
-        };
-        
-        document.getElementById('weatherIcon').textContent = iconMap[iconCode] || '🌤️';
-    }
-
-    updateLocationCard(latitude, longitude) {
-        // Show coordinates temporarily while loading location name
-        document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-        document.getElementById('locationCard').style.display = 'flex';
-        
-        // Load human-friendly location name and replace coordinates
-        this.loadLocationNameFree(latitude, longitude);
-    }
-
-    // Free OpenStreetMap geocoding to show place name instead of coordinates
-    async loadLocationNameFree(latitude, longitude) {
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=${this.currentLang}&addressdetails=1`
-            );
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.address) {
-                const city = data.address.city || 
-                            data.address.town || 
-                            data.address.village || 
-                            data.address.county ||
-                            data.address.state;
-                const country = data.address.country;
-                
-                const locationName = city ? `${city}, ${country}` : country || data.display_name.split(',')[0];
-                
-                // Update the coordinates element to show place name instead
-                document.getElementById('coordinates').textContent = locationName;
-            } else {
-                // Keep coordinates if geocoding fails
-                document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-            }
-            
-        } catch (error) {
-            console.error('Error loading location name:', error);
-            // Keep coordinates as fallback
-            document.getElementById('coordinates').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            this.showError('Failed to load pollen data: ' + error.message);
         }
     }
 
@@ -774,143 +596,53 @@ class PollenTracker {
             historyContainer.className = 'pollen-history-container';
             
             const locationCard = document.getElementById('locationCard');
-            if (locationCard && locationCard.nextSibling) {
+            if (locationCard) {
                 locationCard.parentNode.insertBefore(historyContainer, locationCard.nextSibling);
-            } else if (locationCard) {
-                locationCard.parentNode.appendChild(historyContainer);
             }
         }
         
         return historyContainer;
     }
 
+    // Placeholder methods for completeness (would need full implementation)
+    async loadWeatherData(latitude, longitude) {
+        // Weather loading implementation
+        console.log('Loading weather data...');
+    }
+
+    updateLocationCard(latitude, longitude) {
+        const locationCard = document.getElementById('locationCard');
+        if (locationCard) {
+            locationCard.style.display = 'flex';
+        }
+        console.log('Updating location card...');
+    }
+
     displayPollenData(data) {
-        const container = document.getElementById('pollenContainer');
-        container.innerHTML = '';
-
-        if (!data.dailyInfo || !data.dailyInfo[0] || !data.dailyInfo[0].plantInfo) {
-            this.showError(this.translate('No pollen data'));
-            return;
-        }
-
-        const plantInfo = data.dailyInfo[0].plantInfo;
-        const pollenTypeInfo = data.dailyInfo[0].pollenTypeInfo || [];
-
-        // Filter plants with index value > 1
-        const significantPollens = plantInfo.filter(plant => 
-            plant.indexInfo && plant.indexInfo.value > 1
-        );
-
-        // Also check pollen type info for additional data
-        pollenTypeInfo.forEach(pollenType => {
-            if (pollenType.indexInfo && pollenType.indexInfo.value > 1) {
-                // Check if this pollen type is not already in plantInfo
-                const exists = significantPollens.some(plant => 
-                    plant.code === pollenType.code
-                );
-                if (!exists) {
-                    significantPollens.push({
-                        ...pollenType,
-                        picture: `https://via.placeholder.com/400x200/667eea/ffffff?text=${pollenType.displayName}`
-                    });
-                }
-            }
-        });
-
-        if (significantPollens.length === 0) {
-            this.showError(this.translate('No pollen data'));
-            return;
-        }
-
-        significantPollens.forEach(plant => {
-            const card = this.createPollenCard(plant);
-            container.appendChild(card);
-        });
-    }
-
-    createPollenCard(plant) {
-        const card = document.createElement('div');
-        card.className = 'pollen-card';
-
-        const levelClass = this.getLevelClass(plant.indexInfo.category);
-        const levelText = this.translateLevel(plant.indexInfo.category);
-
-        card.innerHTML = `
-            <img src="${plant.picture || plant.plantDescription?.picture || 'https://magazine.columbia.edu/sites/default/files/styles/wysiwyg_full_width_image/public/2022-06/2022_06_allergies.jpg?itok=W4HZD84K'}" 
-                 alt="${plant.displayName}" 
-                 class="pollen-image" 
-                 onerror="this.src='https://magazine.columbia.edu/sites/default/files/styles/wysiwyg_full_width_image/public/2022-06/2022_06_allergies.jpg?itok=W4HZD84K'">
-            <div class="pollen-content">
-                <div class="pollen-header">
-                    <h3 class="pollen-name">${plant.displayName}</h3>
-                    <span class="pollen-level ${levelClass}">${levelText}</span>
-                </div>
-                <div class="pollen-index">${plant.indexInfo.value}</div>
-                <p class="pollen-description">${plant.indexInfo.indexDescription}</p>
-                ${plant.healthRecommendations && plant.healthRecommendations.length > 0 ? `
-                    <div class="pollen-recommendations">
-                        <h4>${this.translate('Recommendations')}</h4>
-                        <ul>
-                            ${plant.healthRecommendations.map(rec => `<li>${rec}</li>`).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-
-        return card;
-    }
-
-    getLevelClass(category) {
-        const categoryMap = {
-            'Очень низкий': 'level-very-low',
-            'Низкий': 'level-low',
-            'Умеренный': 'level-moderate',
-            'Высокий': 'level-high',
-            'Очень высокий': 'level-very-high',
-            'Very Low': 'level-very-low',
-            'Low': 'level-low',
-            'Moderate': 'level-moderate',
-            'High': 'level-high',
-            'Very High': 'level-very-high'
-        };
-        return categoryMap[category] || 'level-moderate';
-    }
-
-    translateLevel(category) {
-        const levelMap = {
-            'Очень низкий': this.translate('Very Low'),
-            'Низкий': this.translate('Low'),
-            'Умеренный': this.translate('Moderate'),
-            'Высокий': this.translate('High'),
-            'Очень высокий': this.translate('Very High')
-        };
-        return levelMap[category] || category;
+        console.log('Displaying pollen data...');
     }
 
     showLoading() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('locationCard').style.display = 'none';
-        document.getElementById('pollenContainer').innerHTML = '';
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'block';
     }
 
     hideLoading() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('locationCard').style.display = 'flex';
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'none';
     }
 
     showError(message) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorText').textContent = message;
+        console.error('Error:', message);
     }
 
     hideError() {
-        document.getElementById('errorMessage').style.display = 'none';
+        const errorMessage = document.getElementById('errorMessage');
+        if (errorMessage) errorMessage.style.display = 'none';
     }
 }
 
 // Initialize the enhanced app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new PollenTracker();
+    new EnhancedPollenTracker();
 });
