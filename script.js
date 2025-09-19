@@ -8,6 +8,9 @@ class DetailedPollenHistoryManager {
         this.useLocalStorage = typeof(Storage) !== "undefined";
         this.memoryStorage = new Map();
         
+        // Initialize storage wrapper to prevent extension conflicts
+        this.initializeStorage();
+        
         // Pollen type configuration with colors and names
         this.pollenTypes = {
             'TREE_OAK': { 
@@ -73,10 +76,33 @@ class DetailedPollenHistoryManager {
         };
     }
 
-    // Store detailed pollen data with individual types
-    storeDetailedPollenData(latitude, longitude, date, pollenData) {
+    // Initialize storage and clear any corrupted data
+    initializeStorage() {
+        if (this.useLocalStorage) {
+            try {
+                // Test if storage is working and clear any corrupted data
+                const testKey = this.storageKey + '_test';
+                const testData = { test: 'value' };
+                localStorage.setItem(testKey, JSON.stringify(testData));
+                const retrieved = JSON.parse(localStorage.getItem(testKey));
+                localStorage.removeItem(testKey);
+                
+                // Check existing data
+                const existing = localStorage.getItem(this.storageKey);
+                if (existing && (existing === '[object Object]' || existing === 'undefined' || existing === 'null')) {
+                    console.warn('Clearing corrupted localStorage data');
+                    localStorage.removeItem(this.storageKey);
+                }
+            } catch (e) {
+                console.warn('localStorage initialization failed:', e);
+                this.useLocalStorage = false;
+            }
+        }
+    }
+
+    // Store detailed pollen data with individual types for all forecast days
+    storeDetailedPollenData(latitude, longitude, pollenData) {
         const locationKey = this.getLocationKey(latitude, longitude);
-        const dateKey = date || new Date().toISOString().split('T')[0];
         
         let history = this.getHistory();
         
@@ -84,13 +110,23 @@ class DetailedPollenHistoryManager {
             history[locationKey] = {};
         }
         
-        const processedData = this.processDetailedPollenData(pollenData);
-        
-        history[locationKey][dateKey] = {
-            timestamp: Date.now(),
-            rawData: pollenData,
-            processed: processedData
-        };
+        // Process all days from the API response (forecast data)
+        if (pollenData?.dailyInfo) {
+            pollenData.dailyInfo.forEach((dayData, index) => {
+                // Calculate the date for this day (today + index days)
+                const date = new Date();
+                date.setDate(date.getDate() + index);
+                const dateKey = date.toISOString().split('T')[0];
+                
+                const processedData = this.processDetailedPollenData({ dailyInfo: [dayData] });
+                
+                history[locationKey][dateKey] = {
+                    timestamp: Date.now(),
+                    rawData: { dailyInfo: [dayData] },
+                    processed: processedData
+                };
+            });
+        }
         
         this.cleanOldData(history[locationKey]);
         this.saveHistory(history);
@@ -104,9 +140,43 @@ class DetailedPollenHistoryManager {
     getHistory() {
         if (this.useLocalStorage) {
             try {
-                return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+                const storedData = localStorage.getItem(this.storageKey);
+                
+                // Check if data exists and is valid
+                if (!storedData || storedData === 'undefined' || storedData === 'null') {
+                    return {};
+                }
+                
+                // Additional validation to ensure it's valid JSON
+                if (typeof storedData !== 'string' || storedData === '[object Object]') {
+                    console.warn('Invalid localStorage data detected, clearing storage');
+                    localStorage.removeItem(this.storageKey);
+                    return {};
+                }
+                
+                const parsed = JSON.parse(storedData);
+                
+                // Ensure parsed data is an object
+                if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                    console.warn('Invalid data structure in localStorage, clearing storage');
+                    localStorage.removeItem(this.storageKey);
+                    return {};
+                }
+                
+                // Handle new wrapper format vs old direct format
+                if (parsed.version && parsed.data) {
+                    // New wrapper format
+                    return parsed.data;
+                } else {
+                    // Legacy direct format - migrate to new format
+                    this.saveHistory(parsed);
+                    return parsed;
+                }
+                
             } catch (e) {
                 console.warn('Failed to load history from localStorage:', e);
+                // Clear corrupted data
+                localStorage.removeItem(this.storageKey);
                 return {};
             }
         } else {
@@ -119,13 +189,48 @@ class DetailedPollenHistoryManager {
         }
     }
 
-    // Save history to storage
+    // Save history to storage with extension-safe wrapper
     saveHistory(history) {
         if (this.useLocalStorage) {
             try {
-                localStorage.setItem(this.storageKey, JSON.stringify(history));
+                // Validate data before saving
+                if (typeof history !== 'object' || history === null || Array.isArray(history)) {
+                    console.warn('Invalid history data, skipping save');
+                    return;
+                }
+                
+                // Create a wrapper object to prevent extension conflicts
+                const safeWrapper = {
+                    version: '1.0',
+                    timestamp: Date.now(),
+                    data: history
+                };
+                
+                const serialized = JSON.stringify(safeWrapper);
+                
+                // Additional check to ensure serialization worked correctly
+                if (serialized === '[object Object]' || serialized === 'undefined') {
+                    console.warn('Serialization failed, skipping save');
+                    return;
+                }
+                
+                // Use a temporary key first to test if save will work
+                const tempKey = this.storageKey + '_temp';
+                localStorage.setItem(tempKey, serialized);
+                
+                // If temp save worked, move to real key
+                localStorage.setItem(this.storageKey, serialized);
+                localStorage.removeItem(tempKey);
+                
             } catch (e) {
                 console.warn('Failed to save history to localStorage:', e);
+                // If saving fails, try to clear potentially corrupted data
+                try {
+                    localStorage.removeItem(this.storageKey);
+                    localStorage.removeItem(this.storageKey + '_temp');
+                } catch (clearError) {
+                    console.warn('Failed to clear localStorage:', clearError);
+                }
             }
         } else {
             // Fallback to memory storage
@@ -154,22 +259,24 @@ class DetailedPollenHistoryManager {
         // Process plant info
         if (dayData.plantInfo) {
             dayData.plantInfo.forEach(plant => {
-                if (plant.indexInfo && plant.indexInfo.value > 0) {
+                if (plant.indexInfo && (plant.indexInfo.value >= 0 || plant.indexInfo.value === undefined)) {
+                    // Treat undefined values as 0
+                    const pollenValue = plant.indexInfo.value ?? 0;
                     const typeConfig = this.getPollenTypeConfig(plant.code, plant.displayName);
                     
                     result.types[plant.code] = {
                         code: plant.code,
                         name: plant.displayName,
                         shortName: typeConfig.shortName,
-                        value: plant.indexInfo.value,
-                        category: plant.indexInfo.category,
+                        value: pollenValue,
+                        category: plant.indexInfo.category || 'Very Low',
                         color: typeConfig.color,
                         typeCategory: typeConfig.category
                     };
 
-                    if (plant.indexInfo.value > result.maxLevel) {
-                        result.maxLevel = plant.indexInfo.value;
-                        result.maxCategory = plant.indexInfo.category;
+                    if (pollenValue > result.maxLevel) {
+                        result.maxLevel = pollenValue;
+                        result.maxCategory = plant.indexInfo.category || 'Very Low';
                     }
                 }
             });
@@ -178,24 +285,26 @@ class DetailedPollenHistoryManager {
         // Process pollen type info
         if (dayData.pollenTypeInfo) {
             dayData.pollenTypeInfo.forEach(pollen => {
-                if (pollen.indexInfo && pollen.indexInfo.value > 0) {
+                if (pollen.indexInfo && (pollen.indexInfo.value >= 0 || pollen.indexInfo.value === undefined)) {
                     // Don't overwrite if we already have this from plantInfo
                     if (!result.types[pollen.code]) {
+                        // Treat undefined values as 0
+                        const pollenValue = pollen.indexInfo.value ?? 0;
                         const typeConfig = this.getPollenTypeConfig(pollen.code, pollen.displayName);
                         
                         result.types[pollen.code] = {
                             code: pollen.code,
                             name: pollen.displayName,
                             shortName: typeConfig.shortName,
-                            value: pollen.indexInfo.value,
-                            category: pollen.indexInfo.category,
+                            value: pollenValue,
+                            category: pollen.indexInfo.category || 'Very Low',
                             color: typeConfig.color,
                             typeCategory: typeConfig.category
                         };
 
-                        if (pollen.indexInfo.value > result.maxLevel) {
-                            result.maxLevel = pollen.indexInfo.value;
-                            result.maxCategory = pollen.indexInfo.category;
+                        if (pollenValue > result.maxLevel) {
+                            result.maxLevel = pollenValue;
+                            result.maxCategory = pollen.indexInfo.category || 'Very Low';
                         }
                     }
                 }
@@ -212,6 +321,25 @@ class DetailedPollenHistoryManager {
     getPollenTypeConfig(code, displayName) {
         if (this.pollenTypes[code]) {
             return this.pollenTypes[code];
+        }
+
+        // Try fallback mappings for common API codes
+        const fallbackMappings = {
+            'RAGWEED': 'WEED_RAGWEED',
+            'MUGWORT': 'WEED_MUGWORT',
+            'GRAMINALES': 'GRASS',
+            'GRAMINEAE': 'GRASS',
+            'POACEAE': 'GRASS',
+            'OAK': 'TREE_OAK',
+            'BIRCH': 'TREE_BIRCH',
+            'MAPLE': 'TREE_MAPLE',
+            'ASH': 'TREE_ASH',
+            'PINE': 'TREE_PINE',
+            'ALDER': 'TREE_ALDER'
+        };
+
+        if (fallbackMappings[code] && this.pollenTypes[fallbackMappings[code]]) {
+            return this.pollenTypes[fallbackMappings[code]];
         }
 
         // Create default config for unknown types
@@ -243,18 +371,18 @@ class DetailedPollenHistoryManager {
         }
     }
 
-    getDateRange(days = 5) {
+    getDateRange(days = 3) {
         const dates = [];
         const today = new Date();
         
-        for (let i = days - 1; i >= 0; i--) {
+        for (let i = 0; i < days; i++) {
             const date = new Date(today);
-            date.setDate(today.getDate() - i);
+            date.setDate(today.getDate() + i);
             dates.push({
                 date: date.toISOString().split('T')[0],
                 dateObj: new Date(date),
                 isToday: i === 0,
-                isPast: i > 0
+                isFuture: i > 0
             });
         }
         
@@ -269,8 +397,8 @@ class DetailedPollenHistoryManager {
             let dayName;
             if (dateInfo.isToday) {
                 dayName = currentLang === 'ru' ? 'Сегодня' : 'Today';
-            } else if (dateInfo.dateObj.getDate() === new Date().getDate() - 1) {
-                dayName = currentLang === 'ru' ? 'Вчера' : 'Yesterday';
+            } else if (dateInfo.dateObj.getDate() === new Date().getDate() + 1) {
+                dayName = currentLang === 'ru' ? 'Завтра' : 'Tomorrow';
             } else {
                 dayName = dateInfo.dateObj.toLocaleDateString(
                     currentLang === 'ru' ? 'ru-RU' : 'en-US',
@@ -300,7 +428,7 @@ class DetailedPollenHistoryManager {
             
             // Sort by value (highest first) and limit to top 6 for display
             const displayTypes = types
-                .filter(type => type.value > 0)
+                .filter(type => type.value >= 0)
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 6);
 
@@ -406,10 +534,10 @@ class PollenTracker {
                 'Loading pollen data...': 'Loading pollen data...',
                 'Loading weather...': 'Loading weather...',
                 'Refresh': 'Refresh',
-                'History': 'History',
-                'Detailed History': 'Detailed History',
-                'Hide History': 'Hide History',
-                'Show History': 'Show History',
+                'Forecast': 'Forecast',
+                'Detailed Forecast': 'Detailed Forecast',
+                'Hide Forecast': 'Hide Forecast',
+                'Show Forecast': 'Show Forecast',
                 'Error': 'Error',
                 'Try Again': 'Try Again',
                 'Data provided by Google Pollen API': 'Data provided by Google Pollen API',
@@ -426,10 +554,10 @@ class PollenTracker {
                 'Failed to load weather data': 'Failed to load weather data.',
                 'API key required': 'Google API key is required. Please add your API key to the script.',
                 'No pollen data': 'No significant pollen data found for your location today.',
-                '5-Day Pollen History': '5-Day Pollen History',
-                'Detailed Pollen History by Types (5 days)': 'Detailed Pollen History by Types (5 days)',
+                '3-Day Pollen Forecast': '3-Day Pollen Forecast',
+                'Detailed Pollen Forecast by Types (3 days)': 'Detailed Pollen Forecast by Types (3 days)',
                 'Today': 'Today',
-                'Yesterday': 'Yesterday',
+                'Tomorrow': 'Tomorrow',
                 'No data': 'No data',
                 'Pollen Types': 'Pollen Types',
                 'Concentration Levels': 'Concentration Levels'
@@ -440,10 +568,10 @@ class PollenTracker {
                 'Loading pollen data...': 'Загрузка данных о пыльце...',
                 'Loading weather...': 'Загрузка погоды...',
                 'Refresh': 'Обновить',
-                'History': 'История',
-                'Detailed History': 'Подробная история',
-                'Hide History': 'Скрыть историю',
-                'Show History': 'Показать историю',
+                'Forecast': 'Прогноз',
+                'Detailed Forecast': 'Подробный прогноз',
+                'Hide Forecast': 'Скрыть прогноз',
+                'Show Forecast': 'Показать прогноз',
                 'Error': 'Ошибка',
                 'Try Again': 'Попробовать снова',
                 'Data provided by Google Pollen API': 'Данные предоставлены Google Pollen API',
@@ -460,10 +588,10 @@ class PollenTracker {
                 'Failed to load weather data': 'Не удалось загрузить данные о погоде.',
                 'API key required': 'Требуется ключ Google API. Добавьте ваш ключ API в скрипт.',
                 'No pollen data': 'Значимых данных о пыльце для вашего местоположения сегодня не найдено.',
-                '5-Day Pollen History': '5-дневная история пыльцы',
-                'Detailed Pollen History by Types (5 days)': 'Подробная история пыльцы по типам (5 дней)',
+                '3-Day Pollen Forecast': '3-дневный прогноз пыльцы',
+                'Detailed Pollen Forecast by Types (3 days)': 'Подробный прогноз пыльцы по типам (3 дней)',
                 'Today': 'Сегодня',
-                'Yesterday': 'Вчера',
+                'Tomorrow': 'Завтра',
                 'No data': 'Нет данных',
                 'Pollen Types': 'Типы пыльцы',
                 'Concentration Levels': 'Уровни концентрации'
@@ -521,7 +649,7 @@ class PollenTracker {
         const historyContainer = document.getElementById('pollenHistory');
         
         if (this.showHistory) {
-            historyToggle.textContent = this.translate('Hide History');
+            historyToggle.textContent = this.translate('Hide Forecast');
             historyToggle.classList.add('active');
             
             if (this.currentLocation) {
@@ -532,7 +660,7 @@ class PollenTracker {
                 historyContainer.style.display = 'block';
             }
         } else {
-            historyToggle.textContent = this.translate('Detailed History');
+            historyToggle.textContent = this.translate('Detailed Forecast');
             historyToggle.classList.remove('active');
             if (historyContainer) {
                 historyContainer.style.display = 'none';
@@ -552,7 +680,7 @@ class PollenTracker {
         const historyToggle = document.getElementById('historyToggle');
         if (historyToggle) {
             historyToggle.textContent = this.showHistory ? 
-                this.translate('Hide History') : this.translate('Detailed History');
+                this.translate('Hide Forecast') : this.translate('Detailed Forecast');
         }
     }
 
@@ -612,7 +740,9 @@ class PollenTracker {
 
         try {
             const languageCode = this.currentLang;
-            const response = await fetch(`https://pollen.googleapis.com/v1/forecast:lookup?key=${this.apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=1&languageCode=${languageCode}`);
+            const apiUrl = `https://pollen.googleapis.com/v1/forecast:lookup?key=${this.apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=3&languageCode=${languageCode}`;
+            
+            const response = await fetch(apiUrl);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -621,7 +751,7 @@ class PollenTracker {
             const data = await response.json();
             
             // Store in detailed history
-            this.historyManager.storeDetailedPollenData(latitude, longitude, null, data);
+            this.historyManager.storeDetailedPollenData(latitude, longitude, data);
             
             // Display current data
             this.displayPollenData(data);
@@ -731,12 +861,13 @@ class PollenTracker {
     displayDetailedPollenHistory(latitude, longitude) {
         const historyContainer = this.createHistoryContainer();
         const locationHistory = this.historyManager.getLocationHistory(latitude, longitude);
-        const dateRange = this.historyManager.getDateRange(5);
+        const dateRange = this.historyManager.getDateRange(3);
+        
         
         const pollenTypesLegend = this.historyManager.generatePollenTypesLegend(locationHistory, this.currentLang);
         
         const historyHTML = `
-            <h2 class="history-title">${this.translate('Detailed Pollen History by Types (5 days)')}</h2>
+            <h2 class="history-title">${this.translate('Detailed Pollen Forecast by Types (3 days)')}</h2>
             <div class="history-chart">
                 ${this.historyManager.generateDetailedHistoryChart(dateRange, locationHistory, this.currentLang)}
             </div>
@@ -789,6 +920,7 @@ class PollenTracker {
         container.innerHTML = '';
 
         if (!data.dailyInfo || !data.dailyInfo[0] || !data.dailyInfo[0].plantInfo) {
+            console.log('No pollen data found in response');
             this.showError(this.translate('No pollen data'));
             return;
         }
@@ -796,10 +928,12 @@ class PollenTracker {
         const plantInfo = data.dailyInfo[0].plantInfo;
         const pollenTypeInfo = data.dailyInfo[0].pollenTypeInfo || [];
 
+
         // Filter plants with index value > 1
         const significantPollens = plantInfo.filter(plant => 
             plant.indexInfo && plant.indexInfo.value > 1
         );
+        
 
         // Also check pollen type info for additional data
         pollenTypeInfo.forEach(pollenType => {
@@ -811,7 +945,7 @@ class PollenTracker {
                 if (!exists) {
                     significantPollens.push({
                         ...pollenType,
-                        picture: `https://via.placeholder.com/400x200/667eea/ffffff?text=${pollenType.displayName}`
+                        picture: `2022_06_allergies.jpg`
                     });
                 }
             }
@@ -836,10 +970,10 @@ class PollenTracker {
         const levelText = this.translateLevel(plant.indexInfo.category);
 
         card.innerHTML = `
-            <img src="${plant.picture || plant.plantDescription?.picture || 'https://magazine.columbia.edu/sites/default/files/styles/wysiwyg_full_width_image/public/2022-06/2022_06_allergies.jpg?itok=W4HZD84K'}" 
+            <img src="${plant.picture || plant.plantDescription?.picture || '2022_06_allergies.jpg'}" 
                  alt="${plant.displayName}" 
                  class="pollen-image" 
-                 onerror="this.src='https://magazine.columbia.edu/sites/default/files/styles/wysiwyg_full_width_image/public/2022-06/2022_06_allergies.jpg?itok=W4HZD84K'">
+                 onerror="this.src='2022_06_allergies.jpg'">
             <div class="pollen-content">
                 <div class="pollen-header">
                     <h3 class="pollen-name">${plant.displayName}</h3>
