@@ -388,6 +388,7 @@
     }
 }
 
+/* Improvements for mobile view */
 @media (max-width: 768px) {
     .pollen-history-container {
         padding: 20px 15px;
@@ -400,8 +401,9 @@
     }
     
     .history-chart {
-        height: 120px;
         padding: 10px 3px 0;
+        min-height: 160px; /* was 120px */
+        height: auto;      /* let it grow */        
     }
     
     .history-day {
@@ -472,13 +474,16 @@
 
 @media (max-width: 480px) {
     .history-chart {
-        height: 100px;
         padding: 8px 2px 0;
+        min-height: 150px; /* was 100px */
+        height: auto;
+        flex-wrap: wrap;
+        overflow-x: hidden;
     }
     
     .history-day {
         max-width: 60px;
-        min-width: 55px;
+        min-width: 50px; /* was 55–60px */
     }
     
     .day-bars-container {
@@ -496,7 +501,7 @@
     }
     
     .day-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         margin-bottom: 4px;
         min-height: 14px;
     }
