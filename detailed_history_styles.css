@@ -23,13 +23,14 @@
     display: flex;
     justify-content: space-around;
     align-items: flex-end;
-    height: 160px;
+    min-height: 200px;      /* auto-expands for labels & comments */
+    height: auto;           /* don't lock height */
     margin-bottom: 20px;
     padding: 20px 10px 0;
     border-bottom: 2px solid #e0e0e0;
     position: relative;
-    overflow-x: auto;
-    overflow-y: clip;
+    overflow-x: auto;       /* keep horizontal scroll */
+    overflow-y: hidden;     /* prevent vertical scrollbar */ /* another option to specify "clip" */
 }
 
 .history-day {
