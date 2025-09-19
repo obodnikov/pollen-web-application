@@ -4,29 +4,40 @@ A modern, responsive web application that provides real-time pollen information 
 
 ## Features ✨
 
-- **Real-time Pollen Data**: Get current pollen levels for your location using Google Pollen API
+- **3-Day Pollen Forecast**: Get detailed pollen forecasts for today and next 2 days using Google Pollen API
+- **Detailed Pollen History**: Visual charts showing pollen levels by individual types (trees, grasses, weeds)
 - **Human-Friendly Location Names**: Automatic reverse geocoding using free OpenStreetMap API
 - **Multi-language Support**: Available in English and Russian (Russian as default)
 - **Weather Integration**: Current weather conditions with temperature and weather icons
+- **Individual Pollen Types**: Track specific pollens like Oak, Birch, Ragweed, Grasses with custom colors
 - **Health Recommendations**: Personalized advice based on pollen levels
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **Modern UI**: Clean, glassmorphism-inspired design with smooth animations
 - **Custom Favicon**: Professional app icon for all devices and platforms
 - **Geolocation**: Automatic location detection with manual refresh option
 - **Smart Fallbacks**: Graceful error handling and fallback systems
+- **Local Storage**: Stores forecast data locally for quick access
 
 ## Demo 📱
 
 The app displays pollen information for different plant types including:
-- Trees (Oak, Birch, Pine, etc.)
-- Grasses
+- Trees (Oak, Birch, Pine, Ash, Maple, Alder, etc.)
+- Grasses (Graminales and other grass types)
 - Weeds (Ragweed, Mugwort, etc.)
 
-Each pollen card shows:
+**Main Dashboard** shows current day pollen cards with:
 - Pollen level (Very Low to Very High)
-- Numerical index value
+- Numerical index value (1-5 scale)
 - Health impact description
 - Specific recommendations for managing exposure
+
+**3-Day Forecast View** displays:
+- Visual bar charts for each pollen type with color coding
+- Today, Tomorrow, and Day 3 forecast
+- Maximum pollen levels per day
+- Total number of active pollen types
+- Interactive tooltips with detailed information
+- Legend showing all pollen types and concentration levels
 
 The location card displays:
 - Human-readable place names (e.g., "Budapest, Hungary" instead of coordinates)
@@ -37,13 +48,14 @@ The location card displays:
 
 ```
 pollen-tracker/
-├── index.html              # Main HTML structure
-├── styles.css              # All styling and responsive design
-├── script.js               # JavaScript functionality with geocoding
-├── README.md               # This documentation
-├── favicon.svg             # App icon (32x32 SVG)
-├── apple-touch-icon.png    # iOS home screen icon (180x180 PNG)
-└── favicon.ico             # Legacy browser support (32x32 ICO)
+├── index.html                    # Main HTML structure
+├── styles.css                    # Main styling and responsive design
+├── detailed_history_styles.css   # Forecast chart and history styling
+├── script.js                     # JavaScript functionality with forecast system
+├── README.md                     # This documentation
+├── favicon.svg                   # App icon (32x32 SVG)
+├── apple-touch-icon.png          # iOS home screen icon (180x180 PNG)
+└── favicon.ico                   # Legacy browser support (32x32 ICO)
 ```
 
 ## Favicon Setup 🎨
@@ -139,17 +151,21 @@ Then visit `http://localhost:8000` in your browser.
 2. **View Location**: See your current location displayed as a human-readable place name
 3. **Check Weather**: View current temperature and weather conditions
 4. **View Pollen Data**: See current pollen levels for your area
-5. **Read Recommendations**: Follow health advice based on pollen levels
-6. **Switch Languages**: Use the language selector to toggle between English and Russian
-7. **Refresh Data**: Click the refresh button to get updated information
-8. **Add to Home Screen**: On iOS/Android, add the app to your home screen for quick access
+5. **View 3-Day Forecast**: Click the "Forecast" button to see detailed pollen forecasts
+6. **Analyze Trends**: Use the visual charts to see pollen levels across the next 3 days
+7. **Identify Pollen Types**: See which specific trees, grasses, or weeds are affecting your area
+8. **Read Recommendations**: Follow health advice based on pollen levels
+9. **Switch Languages**: Use the language selector to toggle between English and Russian
+10. **Refresh Data**: Click the refresh button to get updated information
+11. **Add to Home Screen**: On iOS/Android, add the app to your home screen for quick access
 
 ## API Configuration 🔧
 
 ### Google Pollen API (Required)
 - **Endpoint**: `https://pollen.googleapis.com/v1/forecast:lookup`
 - **Required Parameters**: API key, latitude, longitude
-- **Optional Parameters**: days (forecast period), languageCode
+- **Forecast Period**: 3 days (today + next 2 days)
+- **Optional Parameters**: languageCode (ru/en supported)
 - **Cost**: Paid service with generous free tier
 
 ### OpenStreetMap Nominatim API (Free - Used for Location Names)
@@ -320,7 +336,17 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Changelog 📅
 
-### Version 1.2 (Latest)
+### Version 2.0 (Latest)
+- ✅ **3-Day Pollen Forecast**: Switched from 5-day to 3-day forecast to match Google API data
+- ✅ **Detailed Forecast Charts**: Visual bar charts showing individual pollen types
+- ✅ **Enhanced Pollen Tracking**: Individual tracking of trees, grasses, and weeds
+- ✅ **Smart Pollen Mapping**: Automatic mapping of API codes to known pollen types
+- ✅ **Local Storage System**: Stores forecast data with enhanced error handling
+- ✅ **Improved Data Processing**: Better handling of undefined/null pollen values
+- ✅ **UI/UX Improvements**: Updated terminology from "History" to "Forecast"
+- ✅ **Performance Optimizations**: Removed debug logging for cleaner production code
+
+### Version 1.2
 - ✅ Added custom favicon and Apple Touch Icon
 - ✅ Enhanced mobile experience with proper icons
 - ✅ Russian as default language option
@@ -353,14 +379,15 @@ For questions or issues:
 ## Roadmap 🛣️
 
 **Planned Features**:
-- [ ] Historical pollen data visualization
-- [ ] 7-day pollen forecast
+- [ ] Historical pollen data visualization (actual past data)
+- [ ] Extended forecast periods (if Google API supports more days)
 - [ ] Push notifications for high pollen alerts
 - [ ] Full PWA support with offline mode and app manifest
 - [ ] User preferences and favorites
 - [ ] Export data functionality
 - [ ] Dark/light theme toggle
 - [ ] Multiple location tracking
+- [ ] Pollen calendar with seasonal trends
 
 ---
 
