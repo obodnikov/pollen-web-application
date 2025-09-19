@@ -16,7 +16,11 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { latitude, longitude, lang = 'en' } = req.query;
+        const { lat, lng, lang = 'en' } = req.query;
+
+        // Support both lat/lng and latitude/longitude parameter names
+        const latitude = lat || req.query.latitude;
+        const longitude = lng || req.query.longitude;
 
         if (!latitude || !longitude) {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
