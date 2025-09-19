@@ -521,7 +521,7 @@ class DetailedPollenHistoryManager {
 // Enhanced PollenTracker - LOCAL VERSION (Direct API calls)
 class PollenTracker {
     constructor() {
-        this.apiKey = 'AIzaSyAPb_3V68NkYHWw4sNBXS0ACuZbkCOJ6N4'; // Replace with your actual API key
+        this.apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
         this.currentLang = 'ru';
         this.historyManager = new DetailedPollenHistoryManager();
         this.showHistory = false;
@@ -771,7 +771,7 @@ class PollenTracker {
     // LOCAL VERSION: Direct Weather API calls (optional)
     async loadWeatherData(latitude, longitude) {
         try {
-            const weatherApiKey = '38d966823b51610f725bd497a6710e69'; // Replace with your weather API key
+            const weatherApiKey = 'YOUR_WEATHER_API_KEY'; // Replace with your weather API key
             
             if (weatherApiKey === 'YOUR_WEATHER_API_KEY') {
                 document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
