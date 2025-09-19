@@ -1,4 +1,4 @@
-// api/pollen.js - Vercel serverless function to proxy API calls
+// api/pollen.js - Vercel serverless function to proxy API calls with 3-day forecast
 export default async function handler(req, res) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -16,7 +16,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { latitude, longitude, languageCode = 'en' } = req.query;
+        const { lat, lng, lang = 'en', days = '3' } = req.query;
+
+        // Support both lat/lng and latitude/longitude parameter names
+        const latitude = lat || req.query.latitude;
+        const longitude = lng || req.query.longitude;
+        const languageCode = lang || req.query.languageCode;
 
         if (!latitude || !longitude) {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
@@ -27,7 +32,10 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'API key not configured' });
         }
 
-        const apiUrl = `https://pollen.googleapis.com/v1/forecast:lookup?key=${apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=1&languageCode=${languageCode}`;
+        // Default to 3 days for forecast, max 5 days as per Google API
+        const requestDays = Math.min(parseInt(days) || 3, 5);
+
+        const apiUrl = `https://pollen.googleapis.com/v1/forecast:lookup?key=${apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=${requestDays}&languageCode=${languageCode}`;
 
         const response = await fetch(apiUrl);
         
