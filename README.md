@@ -336,7 +336,14 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Changelog 📅
 
-### Version 2.0 (Latest)
+### Version 2.1 (Latest)
+- ✅ **Dynamic Chart Heights**: Container heights now automatically scale based on maximum pollen values
+- ✅ **Responsive Height Calculation**: Removed hardcoded heights in CSS for better adaptability
+- ✅ **Smart Visual Scaling**: Bar heights are proportional to the highest pollen value across all displayed days
+- ✅ **Optimized Space Usage**: Containers expand and contract based on actual data ranges
+- ✅ **Enhanced Mobile Responsiveness**: Dynamic heights work seamlessly across all screen sizes
+
+### Version 2.0
 - ✅ **3-Day Pollen Forecast**: Switched from 5-day to 3-day forecast to match Google API data
 - ✅ **Detailed Forecast Charts**: Visual bar charts showing individual pollen types
 - ✅ **Enhanced Pollen Tracking**: Individual tracking of trees, grasses, and weeds

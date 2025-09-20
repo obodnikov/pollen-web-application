@@ -263,7 +263,14 @@ vercel/
 
 ## 🔄 Version Information
 
-### Current Version: 2.0 (Vercel Enhanced)
+### Current Version: 2.1 (Vercel Enhanced)
+- ✅ **Dynamic Chart Heights**: Container heights automatically scale based on maximum pollen values
+- ✅ **Responsive Height Calculation**: Removed hardcoded heights in CSS for better adaptability
+- ✅ **Smart Visual Scaling**: Bar heights are proportional to the highest pollen value across all displayed days
+- ✅ **Optimized Space Usage**: Containers expand and contract based on actual data ranges
+- ✅ **Enhanced Mobile Responsiveness**: Dynamic heights work seamlessly across all screen sizes
+
+### Version 2.0 (Vercel Enhanced)
 - ✅ **3-Day Pollen Forecast**: Accurate forecast matching Google API capabilities
 - ✅ **Visual Forecast Charts**: Interactive bar charts with individual pollen types
 - ✅ **Serverless Architecture**: Secure API handling via Vercel Functions

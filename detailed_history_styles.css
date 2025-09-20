@@ -70,7 +70,6 @@
     display: flex;
     align-items: flex-end;
     gap: 3px;
-    height: 80px;
     margin-bottom: 10px;
     justify-content: center;
     min-width: 90px;
@@ -346,7 +345,6 @@
     }
     
     .day-bars-container {
-        height: 60px;
         gap: 2px;
         min-width: 70px;
     }
@@ -410,7 +408,6 @@
     }
     
     .day-bars-container {
-        height: 50px;
         gap: 1px;
         min-width: 60px;
     }
@@ -482,7 +479,6 @@
     }
     
     .day-bars-container {
-        height: 40px;
         gap: 1px;
         min-width: 45px;
     }

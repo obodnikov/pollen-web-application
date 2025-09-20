@@ -281,6 +281,7 @@ class DetailedPollenHistoryManager {
                 }
             });
         }
+/* Remove common pollen types
 
         // Process pollen type info
         if (dayData.pollenTypeInfo) {
@@ -310,6 +311,8 @@ class DetailedPollenHistoryManager {
                 }
             });
         }
+
+*/
 
         result.totalTypes = Object.keys(result.types).length;
         result.summary = `${result.totalTypes} ${result.totalTypes === 1 ? 'type' : 'types'}`;
