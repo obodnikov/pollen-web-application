@@ -1,4 +1,4 @@
-// Enhanced Vercel PollenTracker with Individual Pollen Type History
+// Enhanced Local PollenTracker with Individual Pollen Type History
 class DetailedPollenHistoryManager {
     constructor() {
         this.storageKey = 'detailed-pollen-history';
@@ -281,8 +281,8 @@ class DetailedPollenHistoryManager {
                 }
             });
         }
+/* Remove common pollen types
 
-/*      try to remove common types pollenTypeInfo
         // Process pollen type info
         if (dayData.pollenTypeInfo) {
             dayData.pollenTypeInfo.forEach(pollen => {
@@ -311,6 +311,7 @@ class DetailedPollenHistoryManager {
                 }
             });
         }
+
 */
 
         result.totalTypes = Object.keys(result.types).length;
@@ -393,22 +394,6 @@ class DetailedPollenHistoryManager {
 
     // Generate detailed history chart HTML
     generateDetailedHistoryChart(dateRange, locationHistory, currentLang) {
-        // First pass: calculate the maximum pollen value across all days
-        let globalMaxValue = 0;
-        dateRange.forEach(dateInfo => {
-            const dayData = locationHistory[dateInfo.date];
-            if (dayData && dayData.processed && dayData.processed.types) {
-                const types = Object.values(dayData.processed.types);
-                const dayMaxValue = Math.max(...types.map(type => type.value || 0));
-                globalMaxValue = Math.max(globalMaxValue, dayMaxValue);
-            }
-        });
-
-        // Calculate dynamic container height based on global max value
-        const baseHeight = 60; // minimum height
-        const maxHeight = 120; // maximum height
-        const dynamicHeight = Math.max(baseHeight, Math.min(maxHeight, baseHeight + (globalMaxValue / 5) * 40));
-        
         return dateRange.map(dateInfo => {
             const dayData = locationHistory[dateInfo.date];
             
@@ -428,7 +413,7 @@ class DetailedPollenHistoryManager {
                 return `
                     <div class="history-day no-data">
                         <div class="day-label">${dayName}</div>
-                        <div class="day-bars-container" style="height: ${dynamicHeight}px;">
+                        <div class="day-bars-container">
                             <div class="pollen-type-bar">
                                 <div class="pollen-bar no-data-bar" style="height: 10px;">
                                     <div class="tooltip">${currentLang === 'ru' ? 'Нет данных' : 'No data'}</div>
@@ -451,9 +436,7 @@ class DetailedPollenHistoryManager {
                 .slice(0, 6);
 
             const barsHTML = displayTypes.map(type => {
-                // Calculate bar height relative to global max and container height
-                const heightRatio = globalMaxValue > 0 ? type.value / globalMaxValue : 0;
-                const barHeight = Math.max(10, heightRatio * (dynamicHeight - 20)); // leave 20px padding
+                const barHeight = Math.max(10, Math.min(80, (type.value / 5) * 80));
                 const shortName = this.getTypeShortName(type.code, type.name, currentLang);
                 const levelText = this.translateLevel(type.category, currentLang);
                 
@@ -470,7 +453,7 @@ class DetailedPollenHistoryManager {
             return `
                 <div class="history-day ${dateInfo.isToday ? 'today' : ''}">
                     <div class="day-label">${dayName}</div>
-                    <div class="day-bars-container" style="height: ${dynamicHeight}px;">
+                    <div class="day-bars-container">
                         ${barsHTML}
                     </div>
                     <div class="day-max-value">${currentLang === 'ru' ? 'Макс' : 'Max'}: ${processed.maxLevel}</div>
@@ -538,10 +521,10 @@ class DetailedPollenHistoryManager {
     }
 }
 
-// Enhanced PollenTracker - VERCEL VERSION (Server-side API calls)
+// Enhanced PollenTracker - LOCAL VERSION (Direct API calls)
 class PollenTracker {
     constructor() {
-        // No API key needed - handled server-side
+        this.apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
         this.currentLang = 'ru';
         this.historyManager = new DetailedPollenHistoryManager();
         this.showHistory = false;
@@ -751,11 +734,18 @@ class PollenTracker {
         );
     }
 
-    // VERCEL VERSION: Server-side API calls
+    // LOCAL VERSION: Direct Google API calls
     async loadPollenData(latitude, longitude) {
+        if (this.apiKey === 'YOUR_GOOGLE_API_KEY') {
+            this.showError(this.translate('API key required'));
+            return;
+        }
+
         try {
             const languageCode = this.currentLang;
-            const response = await fetch(`/api/pollen?lat=${latitude}&lng=${longitude}&lang=${languageCode}&days=3`);
+            const apiUrl = `https://pollen.googleapis.com/v1/forecast:lookup?key=${this.apiKey}&location.longitude=${longitude}&location.latitude=${latitude}&days=3&languageCode=${languageCode}`;
+            
+            const response = await fetch(apiUrl);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -781,10 +771,17 @@ class PollenTracker {
         }
     }
 
-    // VERCEL VERSION: Server-side Weather API calls
+    // LOCAL VERSION: Direct Weather API calls (optional)
     async loadWeatherData(latitude, longitude) {
         try {
-            const response = await fetch(`/api/weather?lat=${latitude}&lng=${longitude}&lang=${this.currentLang}`);
+            const weatherApiKey = 'YOUR_WEATHER_API_KEY'; // Replace with your weather API key
+            
+            if (weatherApiKey === 'YOUR_WEATHER_API_KEY') {
+                document.getElementById('weatherDesc').textContent = this.translate('Failed to load weather data');
+                return;
+            }
+
+            const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${weatherApiKey}&units=metric&lang=${this.currentLang}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -869,6 +866,7 @@ class PollenTracker {
         const locationHistory = this.historyManager.getLocationHistory(latitude, longitude);
         const dateRange = this.historyManager.getDateRange(3);
         
+        
         const pollenTypesLegend = this.historyManager.generatePollenTypesLegend(locationHistory, this.currentLang);
         
         const historyHTML = `
@@ -925,6 +923,7 @@ class PollenTracker {
         container.innerHTML = '';
 
         if (!data.dailyInfo || !data.dailyInfo[0] || !data.dailyInfo[0].plantInfo) {
+            console.log('No pollen data found in response');
             this.showError(this.translate('No pollen data'));
             return;
         }
@@ -932,10 +931,12 @@ class PollenTracker {
         const plantInfo = data.dailyInfo[0].plantInfo;
         const pollenTypeInfo = data.dailyInfo[0].pollenTypeInfo || [];
 
+
         // Filter plants with index value > 1
         const significantPollens = plantInfo.filter(plant => 
             plant.indexInfo && plant.indexInfo.value > 1
         );
+        
 
         // Also check pollen type info for additional data
         pollenTypeInfo.forEach(pollenType => {
