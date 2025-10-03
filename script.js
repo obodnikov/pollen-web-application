@@ -940,7 +940,7 @@ class PollenTracker {
 
         // Also check pollen type info for additional data
         pollenTypeInfo.forEach(pollenType => {
-            if (pollenType.indexInfo && pollenType.indexInfo.value > 1) {
+            if (pollenType.indexInfo && pollenType.indexInfo.value >= 1) {
                 // Check if this pollen type is not already in plantInfo
                 const exists = significantPollens.some(plant => 
                     plant.code === pollenType.code
