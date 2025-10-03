@@ -934,12 +934,12 @@ class PollenTracker {
 
         // Filter plants with index value > 1
         const significantPollens = plantInfo.filter(plant => 
-            plant.indexInfo && plant.indexInfo.value > 1
+            plant.indexInfo && plant.indexInfo.value >= 1
         );
 
         // Also check pollen type info for additional data
         pollenTypeInfo.forEach(pollenType => {
-            if (pollenType.indexInfo && pollenType.indexInfo.value > 1) {
+            if (pollenType.indexInfo && pollenType.indexInfo.value >= 1) {
                 // Check if this pollen type is not already in plantInfo
                 const exists = significantPollens.some(plant => 
                     plant.code === pollenType.code
