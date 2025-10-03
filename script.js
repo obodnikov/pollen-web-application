@@ -934,7 +934,7 @@ class PollenTracker {
 
         // Filter plants with index value > 1
         const significantPollens = plantInfo.filter(plant => 
-            plant.indexInfo && plant.indexInfo.value > 1
+            plant.indexInfo && plant.indexInfo.value >= 1
         );
         
 
